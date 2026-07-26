@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.LibreAAC" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:navigationBarColor">@color/libreaac_green</item>
+        <item name="android:statusBarColor">@color/libreaac_green</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">@color/libreaac_green</item>
+        <item name="android:windowBackground">@color/libreaac_surface</item>
+    </style>
+</resources>
+
