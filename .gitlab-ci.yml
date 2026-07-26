@@ -12,7 +12,6 @@ cache:
     files:
       - gradle/wrapper/gradle-wrapper.properties
       - build.gradle.kts
-      - app/build.gradle.kts
   paths:
     - .gradle/caches/
     - .gradle/wrapper/
@@ -36,4 +35,3 @@ debug-apk:
     paths:
       - app/build/outputs/apk/debug/app-debug.apk
     expire_in: 30 days
-
