@@ -1,6 +1,42 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
 }
+
+val releaseSigningProperties = Properties()
+val releaseSigningPropertiesFile = rootProject.file("signing/keystore.properties")
+if (releaseSigningPropertiesFile.isFile) {
+    releaseSigningPropertiesFile.inputStream().use(releaseSigningProperties::load)
+}
+
+fun releaseSigningValue(propertyName: String, environmentName: String): String? =
+    providers.gradleProperty(propertyName).orNull
+        ?: providers.environmentVariable(environmentName).orNull
+        ?: releaseSigningProperties.getProperty(propertyName)
+
+val releaseStoreFile = releaseSigningValue(
+    "libreaacReleaseStoreFile",
+    "LIBREAAC_RELEASE_STORE_FILE"
+)
+val releaseStorePassword = releaseSigningValue(
+    "libreaacReleaseStorePassword",
+    "LIBREAAC_RELEASE_STORE_PASSWORD"
+)
+val releaseKeyAlias = releaseSigningValue(
+    "libreaacReleaseKeyAlias",
+    "LIBREAAC_RELEASE_KEY_ALIAS"
+)
+val releaseKeyPassword = releaseSigningValue(
+    "libreaacReleaseKeyPassword",
+    "LIBREAAC_RELEASE_KEY_PASSWORD"
+)
+val releaseSigningConfigured = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
 
 android {
     namespace = "org.libreaac.app"
@@ -16,8 +52,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (releaseSigningConfigured) {
+                storeFile = rootProject.file(requireNotNull(releaseStoreFile))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
