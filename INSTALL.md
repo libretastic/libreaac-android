@@ -12,8 +12,19 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 The debug APK is signed with the local Android debug key and is intended only
-for development. A release APK or app bundle must be signed with the project's
-release key before distribution.
+for development.
+
+## Release build
+
+After configuring release signing and building as described in
+[BUILD.md](BUILD.md), install the signed release APK with:
+
+```sh
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+Do not install or distribute `app-release-unsigned.apk`; Android rejects APKs
+without a signing certificate.
 
 ## Updates and data
 
@@ -23,4 +34,3 @@ local data. Save important vocabularies to user-controlled OBF/OBZ files before
 uninstalling or clearing app storage.
 
 No network connection is required to run the installed app.
-
