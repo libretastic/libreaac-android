@@ -125,6 +125,69 @@ Record the APK SHA-256 checksum alongside each distributed release. The APK
 checksum changes when the application is rebuilt; the certificate digest above
 must remain constant.
 
+## Publish a GitLab release with `glab`
+
+`glab` must be installed and authenticated against the GitLab host. Run release
+commands inside this repository so `glab` automatically targets
+`libreaac/libreaac-android`. When running elsewhere, add:
+
+```sh
+-R libreaac/libreaac-android
+```
+
+Publish only after the release merge request has been merged and local `master`
+has been updated to exactly match `origin/master`. Set the version without the
+leading `v`, verify that the APK version matches it, rebuild and verify the
+signature, then create the release:
+
+```sh
+release_version=0.1.1
+release_tag="v${release_version}"
+release_apk="app/build/outputs/apk/release/app-release.apk"
+
+git switch master
+git pull origin master
+./gradlew testDebugUnitTest lint assembleRelease
+apksigner verify --verbose --print-certs "${release_apk}"
+sha256sum "${release_apk}"
+
+glab release create "${release_tag}" \
+  "${release_apk}#libreaac-v${release_version}.apk" \
+  --ref master \
+  --name "LibreAAC ${release_version}" \
+  --notes "LibreAAC Android ${release_version}" \
+  --no-update
+
+glab release view "${release_tag}"
+```
+
+`--no-update` prevents an accidental second invocation from silently changing
+an existing release. Without it, `glab release create` is an upsert. If the tag
+does not already exist, `--ref master` creates it at the verified release
+commit. The `#libreaac-v…apk` suffix sets the downloadable asset name without
+renaming the local Gradle output.
+
+Useful release operations are:
+
+```sh
+glab release list
+glab release view
+glab release view v0.1.1
+glab release download v0.1.1 -n "libreaac-v0.1.1.apk"
+glab release upload v0.1.1 ./additional-file
+```
+
+On `release download`, `-n` means an asset-name glob. On `release create`, `-n`
+means the release name. Downloading without an asset filter also downloads the
+automatically generated source archives. Deleting a release is destructive and
+must be explicit:
+
+```sh
+glab release delete v0.1.1 -y
+```
+
+Add `--with-tag` only when the Git tag must also be deleted.
+
 ## Non-local signing configuration
 
 Release environments may use Gradle properties or environment variables instead
