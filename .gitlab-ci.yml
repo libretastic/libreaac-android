@@ -1,0 +1,39 @@
+image: ghcr.io/cirruslabs/android-sdk:36
+
+stages:
+  - verify
+  - build
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+cache:
+  key:
+    files:
+      - gradle/wrapper/gradle-wrapper.properties
+      - build.gradle.kts
+      - app/build.gradle.kts
+  paths:
+    - .gradle/caches/
+    - .gradle/wrapper/
+
+verify:
+  stage: verify
+  script:
+    - ./gradlew --no-daemon testDebugUnitTest lint
+  artifacts:
+    when: always
+    paths:
+      - app/build/reports/
+      - app/build/test-results/
+    expire_in: 30 days
+
+debug-apk:
+  stage: build
+  script:
+    - ./gradlew --no-daemon assembleDebug
+  artifacts:
+    paths:
+      - app/build/outputs/apk/debug/app-debug.apk
+    expire_in: 30 days
+
