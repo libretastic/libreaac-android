@@ -20,6 +20,8 @@ reviewed selection in `openboards/bundles/libreaac.json`. Test and direct APKs
 put the archives in the base package. Google Play bundles put them in an
 install-time Play Asset Delivery pack so the base module remains below Play's
 200 MB compressed-download limit. The archives are never copied into Git.
+The public source for that collection is
+[github.com/libretastic/openboards](https://github.com/libretastic/openboards).
 
 ## Development build
 
@@ -78,7 +80,8 @@ environment variables happen to be present.
 
 ## Update the embedded web release
 
-First verify and build the sibling web repository:
+First verify and build the sibling
+[`libreaac` web repository](https://github.com/libretastic/libreaac):
 
 ```sh
 cd ../libreaac
