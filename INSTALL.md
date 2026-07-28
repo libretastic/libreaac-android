@@ -34,3 +34,7 @@ local data. Save important vocabularies to user-controlled OBF/OBZ files before
 uninstalling or clearing app storage.
 
 No network connection is required to run the installed app.
+
+Application source, issue tracking and build documentation are available from
+the public
+[LibreAAC for Android repository](https://github.com/libretastic/libreaac-android).
