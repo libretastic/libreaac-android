@@ -15,6 +15,14 @@ unless a step says otherwise. Generated build outputs are placed under
 `app/build/` and are not committed. This repository contains no private signing
 material and can be built without access to release credentials.
 
+All source repositories used by the Android build are public:
+
+| Component | Source |
+| --- | --- |
+| Android wrapper | [libretastic/libreaac-android](https://github.com/libretastic/libreaac-android) |
+| Web application | [libretastic/libreaac](https://github.com/libretastic/libreaac) |
+| Bundled boards | [libretastic/openboards](https://github.com/libretastic/openboards) |
+
 When the sibling `openboards` repository is present, builds can stage the
 reviewed selection in `openboards/bundles/libreaac.json`. Test and direct APKs
 put the archives in the base package. Google Play bundles put them in an
@@ -77,6 +85,90 @@ Outputs:
 These artifacts exercise the release build but are not suitable for
 distribution. Signing is explicitly disabled by the script even if signing
 environment variables happen to be present.
+
+## Clean public-source build
+
+The following reproduces the complete unsigned LibreAAC 0.1.7 APK from clean
+clones of the three public GitHub repositories. Full commit IDs intentionally
+pin the web application and board collection used by that release:
+
+```sh
+mkdir libreaac-public-build
+cd libreaac-public-build
+
+git clone https://github.com/libretastic/libreaac-android.git
+git clone https://github.com/libretastic/libreaac.git
+git clone https://github.com/libretastic/openboards.git
+
+git -C libreaac-android checkout --detach \
+  45eaab18a0fc457634821a244525634317f7fcc1
+git -C libreaac checkout --detach \
+  3df9ed90f062c6512d4af06b7eb89e3dc9910b5f
+git -C openboards checkout --detach \
+  c0fbebf62c7b7af9f93271d01737f3cae201a4f5
+
+(
+  cd libreaac
+  npm ci
+  npm test
+  npm run typecheck
+  npm run lint
+  npm run build
+)
+
+libreaac-android/scripts/sync-frontend.sh \
+  libreaac/dist \
+  3df9ed90f062c6512d4af06b7eb89e3dc9910b5f
+
+(
+  cd libreaac-android
+  ./gradlew \
+    -PlibreaacReleaseSigningEnabled=false \
+    -PlibreaacOpenboardsRepo=../openboards \
+    -PlibreaacBundledOpenboardsRequired=true \
+    -PlibreaacBundledOpenboardsDelivery=base \
+    testDebugUnitTest lint assembleRelease
+)
+```
+
+The resulting unsigned APK is
+`libreaac-android/app/build/outputs/apk/release/app-release-unsigned.apk`.
+This procedure has been tested from clean public clones. The rebuilt web
+assets matched the assets in the Android release commit byte for byte.
+
+For the latest development revision, omit the three `checkout --detach`
+commands. A release should always replace them with reviewed full commit IDs.
+
+## F-Droid packaging notes
+
+LibreAAC can be built entirely from publicly accessible source using a free
+software toolchain. An F-Droid recipe should nevertheless rebuild everything
+rather than trust the compiled web bundle committed for ordinary Android
+builds:
+
+1. Use the Android repository as `Repo` and pin a full Android commit.
+2. Obtain the web and openboards repositories as pinned source libraries.
+3. Remove `app/src/main/assets` during source preparation.
+4. Run `npm ci`, the web verification commands, and `npm run build`, then use
+   `scripts/sync-frontend.sh` to recreate the Android assets.
+5. Build a self-contained base APK with signing disabled and
+   `libreaacBundledOpenboardsDelivery=base`. F-Droid distributes APKs, not the
+   Google Play asset-pack AAB.
+6. Declare the `NonFreeAssets` anti-feature for builds containing
+   `ck12.obz`. The CommuniKate 12 board is redistributable under
+   CC BY-NC-SA 3.0, but its non-commercial restriction is covered by that
+   F-Droid anti-feature.
+
+The current complete base APK is approximately 559 MiB. This is not identified
+as an automatic rejection in the inclusion policy, but it is large enough to
+discuss with F-Droid maintainers before submission. A future smaller bundle
+selection could reduce repository and user download costs.
+
+See the official [F-Droid inclusion
+policy](https://f-droid.org/en/docs/Inclusion_Policy/),
+[anti-feature definitions](https://f-droid.org/en/docs/Anti-Features/), and
+[build metadata reference](https://f-droid.org/en/docs/Build_Metadata_Reference/)
+when preparing the `fdroiddata` submission.
 
 ## Update the embedded web release
 
