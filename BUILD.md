@@ -15,6 +15,12 @@ unless a step says otherwise. Generated build outputs are placed under
 `app/build/` and are not committed. This repository contains no private signing
 material and can be built without access to release credentials.
 
+When the sibling `openboards` repository is present, builds can stage the
+reviewed selection in `openboards/bundles/libreaac.json`. Test and direct APKs
+put the archives in the base package. Google Play bundles put them in an
+install-time Play Asset Delivery pack so the base module remains below Play's
+200 MB compressed-download limit. The archives are never copied into Git.
+
 ## Development build
 
 Run the unit tests and lint checks before assembling the debug APK:
@@ -32,6 +38,25 @@ Outputs:
 The debug APK is automatically signed with the workstation's Android debug key.
 It is suitable for development only and cannot be upgraded in place to a
 release-signed build.
+
+If `../openboards` is absent, public and debug builds remain possible but use
+an empty bundled-board manifest. Override the source checkout with:
+
+```sh
+./gradlew -PlibreaacOpenboardsRepo=/absolute/path/to/openboards assembleDebug
+```
+
+Use `-PlibreaacBundledOpenboardsRequired=true` when an absent manifest must
+fail the build. Private signed-release scripts set this requirement.
+
+The delivery property accepts `base`, `asset-pack`, or `none`:
+
+```sh
+-PlibreaacBundledOpenboardsDelivery=base
+```
+
+Use `base` for a self-contained APK and `asset-pack` for a Google Play AAB.
+The public wrapper scripts choose the correct mode automatically.
 
 ## Unsigned release build
 
@@ -100,7 +125,9 @@ Then, from a trusted environment that has supplied the external signing
 configuration, run:
 
 ```sh
-./gradlew -PlibreaacReleaseSigningEnabled=true \
+./gradlew \
+  -PlibreaacReleaseSigningEnabled=true \
+  -PlibreaacBundledOpenboardsDelivery=base \
   testDebugUnitTest lint assembleRelease
 ```
 
@@ -117,12 +144,29 @@ before distribution.
 For Google Play, build a signed Android App Bundle instead:
 
 ```sh
-./gradlew -PlibreaacReleaseSigningEnabled=true \
+./gradlew \
+  -PlibreaacReleaseSigningEnabled=true \
+  -PlibreaacBundledOpenboardsDelivery=asset-pack \
   testDebugUnitTest lint bundleRelease
 ```
 
 The signed bundle is written to
 `app/build/outputs/bundle/release/app-release.aab`.
+
+Official signed builds must also provide the reviewed openboards checkout:
+
+```sh
+./gradlew \
+  -PlibreaacReleaseSigningEnabled=true \
+  -PlibreaacOpenboardsRepo=/absolute/path/to/openboards \
+  -PlibreaacBundledOpenboardsRequired=true \
+  -PlibreaacBundledOpenboardsDelivery=asset-pack \
+  testDebugUnitTest lint bundleRelease
+```
+
+The install-time asset pack is available through Android's `AssetManager` at
+application launch, so the WebView uses the same
+`bundled-openboards/<filename>` paths as the self-contained test APK.
 
 ## Verify the release APK
 
@@ -159,22 +203,31 @@ commands inside this repository so `glab` automatically targets
 Publish only after the release merge request has been merged and local `master`
 has been updated to exactly match `origin/master`. Set the version without the
 leading `v`, verify that the APK version matches it, rebuild and verify the
-signature, then create the release:
+signatures, then create the release:
 
 ```sh
-release_version=0.1.4
+release_version=0.1.6
 release_tag="v${release_version}"
 release_apk="app/build/outputs/apk/release/app-release.apk"
+release_aab="app/build/outputs/bundle/release/app-release.aab"
 
 git switch master
 git pull origin master
-./gradlew -PlibreaacReleaseSigningEnabled=true \
+./gradlew \
+  -PlibreaacReleaseSigningEnabled=true \
+  -PlibreaacBundledOpenboardsDelivery=base \
   testDebugUnitTest lint assembleRelease
+./gradlew \
+  -PlibreaacReleaseSigningEnabled=true \
+  -PlibreaacBundledOpenboardsDelivery=asset-pack \
+  bundleRelease
 apksigner verify --verbose --print-certs "${release_apk}"
-sha256sum "${release_apk}"
+jarsigner -verify "${release_aab}"
+sha256sum "${release_apk}" "${release_aab}"
 
 glab release create "${release_tag}" \
   "${release_apk}#libreaac-v${release_version}.apk" \
+  "${release_aab}#libreaac-v${release_version}.aab" \
   --ref master \
   --name "LibreAAC ${release_version}" \
   --notes "LibreAAC Android ${release_version}" \
@@ -186,17 +239,17 @@ glab release view "${release_tag}"
 `--no-update` prevents an accidental second invocation from silently changing
 an existing release. Without it, `glab release create` is an upsert. If the tag
 does not already exist, `--ref master` creates it at the verified release
-commit. The `#libreaac-v…apk` suffix sets the downloadable asset name without
-renaming the local Gradle output.
+commit. The `#libreaac-v…` suffixes set the downloadable asset names without
+renaming the local Gradle outputs.
 
 Useful release operations are:
 
 ```sh
 glab release list
 glab release view
-glab release view v0.1.4
-glab release download v0.1.4 -n "libreaac-v0.1.4.apk"
-glab release upload v0.1.4 ./additional-file
+glab release view v0.1.6
+glab release download v0.1.6 -n "libreaac-v0.1.6.*"
+glab release upload v0.1.6 ./additional-file
 ```
 
 On `release download`, `-n` means an asset-name glob. On `release create`, `-n`
@@ -205,7 +258,7 @@ automatically generated source archives. Deleting a release is destructive and
 must be explicit:
 
 ```sh
-glab release delete v0.1.4 -y
+glab release delete v0.1.6 -y
 ```
 
 Add `--with-tag` only when the Git tag must also be deleted.

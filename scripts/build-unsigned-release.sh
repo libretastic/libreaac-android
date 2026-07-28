@@ -7,9 +7,14 @@ unsigned_bundle="$repo_root/app/build/outputs/bundle/release/app-release.aab"
 
 "$repo_root/gradlew" -p "$repo_root" \
   -PlibreaacReleaseSigningEnabled=false \
+  -PlibreaacBundledOpenboardsDelivery=base \
   testDebugUnitTest \
   lint \
-  assembleRelease \
+  assembleRelease
+
+"$repo_root/gradlew" -p "$repo_root" \
+  -PlibreaacReleaseSigningEnabled=false \
+  -PlibreaacBundledOpenboardsDelivery=asset-pack \
   bundleRelease
 
 if [ ! -f "$unsigned_apk" ]; then
