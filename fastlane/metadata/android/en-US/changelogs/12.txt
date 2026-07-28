@@ -1,0 +1,3 @@
+Improves compatibility with F-Droid's package verification.
+
+There are no user-facing changes in this release.
