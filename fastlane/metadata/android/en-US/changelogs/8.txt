@@ -1,0 +1,1 @@
+Adds a tablet-focused communication interface, guarded management controls, bundled CommuniKate, Quick Core, Sequoia and Vocal Flair boards, first-open loading guidance, local OBF/OBZ file handling, and configurable speech, display and scanning settings.

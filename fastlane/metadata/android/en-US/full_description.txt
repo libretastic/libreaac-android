@@ -1,0 +1,28 @@
+LibreAAC is a free, ad-free augmentative and alternative communication (AAC) app for Android tablets. It works offline and keeps communication boards and preferences on the device.
+
+Select words or symbols to speak them and build a phrase. Move between linked boards, return home, or speak the complete phrase when it is ready. Speech uses the voices installed on the device.
+
+Features include:
+
+<ul>
+<li>OBF and OBZ Open Board Format support</li>
+<li>bundled communication boards for getting started</li>
+<li>words, images, sounds, and linked boards</li>
+<li>phrase building and complete-phrase speech</li>
+<li>configurable labels, board fitting, speech, and scanning</li>
+<li>guarded management and editing controls</li>
+<li>local import, editing, export, and backup</li>
+</ul>
+
+LibreAAC has no advertising, analytics, telemetry, accounts, or application server. The Android app declares no internet permission. Files are accessed only through Android's system file picker when the user chooses to open or save them.
+
+The application is GPL-3.0-only free software. Bundled communication boards are independent works under their documented Creative Commons licences. CommuniKate 12 is distributed under CC BY-NC-SA 3.0; the other bundled collections are documented under CC BY 4.0.
+
+Documentation:
+https://libretastic.github.io/
+
+Privacy policy:
+https://libretastic.github.io/privacy/
+
+Source code:
+https://github.com/libretastic/libreaac-android

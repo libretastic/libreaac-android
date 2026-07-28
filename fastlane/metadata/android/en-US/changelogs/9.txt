@@ -1,0 +1,1 @@
+Adds upstream F-Droid listing metadata and documents the complete clean public-source build. Application behaviour and bundled communication boards are unchanged from 0.1.7.
