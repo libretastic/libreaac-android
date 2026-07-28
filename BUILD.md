@@ -206,7 +206,7 @@ leading `v`, verify that the APK version matches it, rebuild and verify the
 signatures, then create the release:
 
 ```sh
-release_version=0.1.6
+release_version=0.1.7
 release_tag="v${release_version}"
 release_apk="app/build/outputs/apk/release/app-release.apk"
 release_aab="app/build/outputs/bundle/release/app-release.aab"
@@ -247,9 +247,9 @@ Useful release operations are:
 ```sh
 glab release list
 glab release view
-glab release view v0.1.6
-glab release download v0.1.6 -n "libreaac-v0.1.6.*"
-glab release upload v0.1.6 ./additional-file
+glab release view v0.1.7
+glab release download v0.1.7 -n "libreaac-v0.1.7.*"
+glab release upload v0.1.7 ./additional-file
 ```
 
 On `release download`, `-n` means an asset-name glob. On `release create`, `-n`
@@ -258,7 +258,7 @@ automatically generated source archives. Deleting a release is destructive and
 must be explicit:
 
 ```sh
-glab release delete v0.1.6 -y
+glab release delete v0.1.7 -y
 ```
 
 Add `--with-tag` only when the Git tag must also be deleted.
