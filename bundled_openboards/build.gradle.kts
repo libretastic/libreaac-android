@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Sync
 
 plugins {
@@ -53,8 +54,16 @@ val boardSources =
         emptyList()
     }
 
+val stagedAssets = layout.projectDirectory.dir("src/main/assets")
+val cleanStagedBundledOpenboards = tasks.register<Delete>(
+    "cleanStagedBundledOpenboards"
+) {
+    delete(stagedAssets)
+}
+
 val stageBundledOpenboards = tasks.register<Sync>("stageBundledOpenboards") {
-    into(layout.projectDirectory.dir("src/main/assets"))
+    dependsOn(cleanStagedBundledOpenboards)
+    into(stagedAssets)
     if (delivery == "asset-pack" && manifestFile.isFile) {
         from(manifestFile) {
             into("bundled-openboards")

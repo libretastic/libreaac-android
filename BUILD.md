@@ -96,7 +96,7 @@ environment variables happen to be present.
 
 ## Clean public-source build
 
-The following builds the complete unsigned LibreAAC 0.1.9 APK from a clean
+The following builds the complete unsigned LibreAAC 0.1.10 APK from a clean
 clone of the public GitHub repository. Its Git submodules pin the exact web
 application and board collection revisions used by the release:
 
@@ -104,10 +104,10 @@ application and board collection revisions used by the release:
 mkdir libreaac-public-build
 cd libreaac-public-build
 
-git clone --branch v0.1.9 --recurse-submodules \
+git clone --branch v0.1.10 --recurse-submodules \
   https://github.com/libretastic/libreaac-android.git
 
-test "$(git -C libreaac-android describe --tags --exact-match)" = "v0.1.9"
+test "$(git -C libreaac-android describe --tags --exact-match)" = "v0.1.10"
 
 (
   cd libreaac-android/upstream/libreaac
@@ -137,7 +137,7 @@ The resulting unsigned APK is
 This procedure has been tested from clean public clones. The rebuilt web
 assets matched the assets in the Android release commit byte for byte.
 
-For the latest development revision, omit `--branch v0.1.9` and the exact-tag
+For the latest development revision, omit `--branch v0.1.10` and the exact-tag
 check. Release tags continue to pin reviewed full submodule commit IDs.
 
 ## F-Droid packaging notes
@@ -155,15 +155,13 @@ builds:
 5. Build a self-contained base APK with signing disabled and
    `libreaacBundledOpenboardsDelivery=base`. F-Droid distributes APKs, not the
    Google Play asset-pack AAB.
-6. Declare the `NonFreeAssets` anti-feature for builds containing
-   `ck12.obz`. The CommuniKate 12 board is redistributable under
-   CC BY-NC-SA 3.0, but its non-commercial restriction is covered by that
-   F-Droid anti-feature.
+The production bundle excludes the separately available CommuniKate archives,
+so it does not require the `NonFreeAssets` anti-feature for their
+non-commercial licensing terms.
 
-The current complete base APK is approximately 559 MiB. This is not identified
-as an automatic rejection in the inclusion policy, but it is large enough to
-discuss with F-Droid maintainers before submission. A future smaller bundle
-selection could reduce repository and user download costs.
+The complete base APK is approximately 358 MiB because it contains nine
+self-contained Open Board packages. Discuss its size with F-Droid maintainers
+if their build or publication infrastructure rejects the artifact.
 
 See the official [F-Droid inclusion
 policy](https://f-droid.org/en/docs/Inclusion_Policy/),
@@ -302,7 +300,7 @@ leading `v`, verify that the APK version matches it, rebuild and verify the
 signatures, then create the release:
 
 ```sh
-release_version=0.1.9
+release_version=0.1.10
 release_tag="v${release_version}"
 release_apk="app/build/outputs/apk/release/app-release.apk"
 release_aab="app/build/outputs/bundle/release/app-release.aab"
@@ -343,9 +341,9 @@ Useful release operations are:
 ```sh
 glab release list
 glab release view
-glab release view v0.1.9
-glab release download v0.1.9 -n "libreaac-v0.1.9.*"
-glab release upload v0.1.9 ./additional-file
+glab release view v0.1.10
+glab release download v0.1.10 -n "libreaac-v0.1.10.*"
+glab release upload v0.1.10 ./additional-file
 ```
 
 On `release download`, `-n` means an asset-name glob. On `release create`, `-n`
@@ -354,7 +352,7 @@ automatically generated source archives. Deleting a release is destructive and
 must be explicit:
 
 ```sh
-glab release delete v0.1.9 -y
+glab release delete v0.1.10 -y
 ```
 
 Add `--with-tag` only when the Git tag must also be deleted.

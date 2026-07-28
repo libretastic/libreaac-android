@@ -16,7 +16,7 @@ Features include:
 
 LibreAAC has no advertising, analytics, telemetry, accounts, or application server. The Android app declares no internet permission. Files are accessed only through Android's system file picker when the user chooses to open or save them.
 
-The application is GPL-3.0-only free software. Bundled communication boards are independent works under their documented Creative Commons licences. CommuniKate 12 is distributed under CC BY-NC-SA 3.0; the other bundled collections are documented under CC BY 4.0.
+The application is GPL-3.0-only free software. Bundled communication boards are independent works documented under CC BY 4.0. CommuniKate boards remain available separately from the public openboards collection under their recorded non-commercial licences.
 
 Documentation:
 https://libretastic.github.io/
