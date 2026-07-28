@@ -1,19 +1,10 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
-}
-
-val releaseSigningProperties = Properties()
-val releaseSigningPropertiesFile = rootProject.file("signing/keystore.properties")
-if (releaseSigningPropertiesFile.isFile) {
-    releaseSigningPropertiesFile.inputStream().use(releaseSigningProperties::load)
 }
 
 fun releaseSigningValue(propertyName: String, environmentName: String): String? =
     providers.gradleProperty(propertyName).orNull
         ?: providers.environmentVariable(environmentName).orNull
-        ?: releaseSigningProperties.getProperty(propertyName)
 
 val releaseStoreFile = releaseSigningValue(
     "libreaacReleaseStoreFile",
@@ -37,6 +28,18 @@ val releaseSigningConfigured = listOf(
     releaseKeyAlias,
     releaseKeyPassword
 ).all { !it.isNullOrBlank() }
+val releaseSigningEnabled = providers
+    .gradleProperty("libreaacReleaseSigningEnabled")
+    .orNull
+    ?.toBooleanStrictOrNull()
+    ?: false
+
+if (releaseSigningEnabled && !releaseSigningConfigured) {
+    error(
+        "Release signing was requested, but the external keystore path, " +
+            "store password, key alias, and key password were not all supplied."
+    )
+}
 
 android {
     namespace = "org.libreaac.app"
@@ -54,7 +57,7 @@ android {
 
     signingConfigs {
         create("release") {
-            if (releaseSigningConfigured) {
+            if (releaseSigningEnabled) {
                 storeFile = rootProject.file(requireNotNull(releaseStoreFile))
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
@@ -65,7 +68,7 @@ android {
 
     buildTypes {
         release {
-            if (releaseSigningConfigured) {
+            if (releaseSigningEnabled) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = true

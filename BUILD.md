@@ -12,14 +12,15 @@ versions are pinned by the build scripts.
 
 Run all commands in this document from the `libreaac-android` repository root
 unless a step says otherwise. Generated build outputs are placed under
-`app/build/` and are not committed.
+`app/build/` and are not committed. This repository contains no private signing
+material and can be built without access to release credentials.
 
 ## Development build
 
 Run the unit tests and lint checks before assembling the debug APK:
 
 ```sh
-./gradlew testDebugUnitTest lint assembleDebug
+scripts/build-debug.sh
 ```
 
 Outputs:
@@ -31,6 +32,24 @@ Outputs:
 The debug APK is automatically signed with the workstation's Android debug key.
 It is suitable for development only and cannot be upgraded in place to a
 release-signed build.
+
+## Unsigned release build
+
+Build minified release APK and Android App Bundle artifacts without private
+signing material:
+
+```sh
+scripts/build-unsigned-release.sh
+```
+
+Outputs:
+
+- unsigned APK: `app/build/outputs/apk/release/app-release-unsigned.apk`
+- unsigned app bundle: `app/build/outputs/bundle/release/app-release.aab`
+
+These artifacts exercise the release build but are not suitable for
+distribution. Signing is explicitly disabled by the script even if signing
+environment variables happen to be present.
 
 ## Update the embedded web release
 
@@ -58,39 +77,31 @@ looks like a completed production build, and writes asset checksums to
 
 ## Configure release signing
 
-The encrypted release keystore is versioned at
-`signing/libreaac-release.keystore`. Its password is not versioned. Local release
-builds read the password and other signing values from the ignored, locally
-permission-restricted `signing/keystore.properties` file.
+Release signing is optional and external. No keystore or password file belongs
+in this repository. A trusted private build environment must provide all four
+signing values and explicitly enable signing:
 
-The file has this structure:
+| Gradle property | Environment variable |
+| --- | --- |
+| `libreaacReleaseStoreFile` | `LIBREAAC_RELEASE_STORE_FILE` |
+| `libreaacReleaseStorePassword` | `LIBREAAC_RELEASE_STORE_PASSWORD` |
+| `libreaacReleaseKeyAlias` | `LIBREAAC_RELEASE_KEY_ALIAS` |
+| `libreaacReleaseKeyPassword` | `LIBREAAC_RELEASE_KEY_PASSWORD` |
 
-```properties
-libreaacReleaseStoreFile=signing/libreaac-release.keystore
-libreaacReleaseStorePassword=RELEASE_KEYSTORE_PASSWORD
-libreaacReleaseKeyAlias=libreaac-release
-libreaacReleaseKeyPassword=RELEASE_KEY_PASSWORD
-```
-
-Replace the two password placeholders with the actual credentials and restrict
-the file to its owner:
-
-```sh
-chmod 600 signing/keystore.properties
-```
-
-Do not create a new release keystore when building a later version. Android
-accepts an application update only when it is signed by the same key as the
-installed version.
+Set `-PlibreaacReleaseSigningEnabled=true` only for a trusted signed build.
+The build fails if signing is requested without a complete configuration.
+Absolute keystore paths are supported.
 
 ## Build a signed release
 
 For a release containing an updated web application, complete
 [Update the embedded web release](#update-the-embedded-web-release) first.
-Then run:
+Then, from a trusted environment that has supplied the external signing
+configuration, run:
 
 ```sh
-./gradlew testDebugUnitTest lint assembleRelease
+./gradlew -PlibreaacReleaseSigningEnabled=true \
+  testDebugUnitTest lint assembleRelease
 ```
 
 The signed APK is written to:
@@ -99,9 +110,19 @@ The signed APK is written to:
 app/build/outputs/apk/release/app-release.apk
 ```
 
-The build has failed its release purpose if this file is absent. If Gradle
-instead creates `app-release-unsigned.apk`, the signing configuration was
-missing or incomplete; do not distribute that file.
+The build has failed its release purpose if this file is absent. Private
+automation should verify both the artifact signature and expected certificate
+before distribution.
+
+For Google Play, build a signed Android App Bundle instead:
+
+```sh
+./gradlew -PlibreaacReleaseSigningEnabled=true \
+  testDebugUnitTest lint bundleRelease
+```
+
+The signed bundle is written to
+`app/build/outputs/bundle/release/app-release.aab`.
 
 ## Verify the release APK
 
@@ -147,7 +168,8 @@ release_apk="app/build/outputs/apk/release/app-release.apk"
 
 git switch master
 git pull origin master
-./gradlew testDebugUnitTest lint assembleRelease
+./gradlew -PlibreaacReleaseSigningEnabled=true \
+  testDebugUnitTest lint assembleRelease
 apksigner verify --verbose --print-certs "${release_apk}"
 sha256sum "${release_apk}"
 
@@ -188,23 +210,14 @@ glab release delete v0.1.4 -y
 
 Add `--with-tag` only when the Git tag must also be deleted.
 
-## Non-local signing configuration
+## Private release automation
 
-Release environments may use Gradle properties or environment variables instead
-of the local properties file:
+The private LibreAAC secrets repository owns signing keys, credentials, signed
+build launchers, and signature checks. Its scripts call this repository's
+Gradle wrapper with an absolute external keystore path. Keep private and public
+repositories as siblings when using those launchers, or set the documented
+private-script override for the Android repository path.
 
-| Gradle or properties-file key | Environment variable |
-| --- | --- |
-| `libreaacReleaseStoreFile` | `LIBREAAC_RELEASE_STORE_FILE` |
-| `libreaacReleaseStorePassword` | `LIBREAAC_RELEASE_STORE_PASSWORD` |
-| `libreaacReleaseKeyAlias` | `LIBREAAC_RELEASE_KEY_ALIAS` |
-| `libreaacReleaseKeyPassword` | `LIBREAAC_RELEASE_KEY_PASSWORD` |
-
-`libreaacReleaseStoreFile` is resolved relative to the repository root. The
-project value is `signing/libreaac-release.keystore`, and the key alias is
-`libreaac-release`.
-
-The release keystore and its password are both required to publish compatible
-updates. Keep secure backups of the repository and the unversioned credentials.
-Never commit `signing/keystore.properties`, passwords, or generated
-`local.properties`.
+Never commit keystores, passwords, generated `local.properties`, or encrypted
+private-key exports to this public repository. Removing a secret in a later
+commit does not remove it from existing Git history.

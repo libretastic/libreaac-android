@@ -5,3 +5,7 @@ captures/
 .idea/
 *.iml
 signing/keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pem
