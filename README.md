@@ -14,6 +14,10 @@ The shell:
 - opens external HTTP/HTTPS links in the user's browser; and
 - declares no `INTERNET` permission.
 
+The repository contains no release-signing credentials. Debug and unsigned
+release builds work independently; trusted private automation supplies signing
+material only when producing distributable APKs or Google Play bundles.
+
 It never fetches a moving web deployment. `app/src/main/assets/FRONTEND-RELEASE`
 identifies the embedded web release and records a SHA-256 digest for every
 asset.
