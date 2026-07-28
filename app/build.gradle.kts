@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Sync
 
 plugins {
@@ -81,9 +82,16 @@ val bundleManifestSource =
         file("src/main/bundled-openboards-empty.json")
     }
 
+val cleanBundledOpenboards = tasks.register<Delete>(
+    "cleanBundledOpenboards"
+) {
+    delete(generatedOpenboardsAssets)
+}
+
 val prepareBundledOpenboards = tasks.register<Sync>(
     "prepareBundledOpenboards"
 ) {
+    dependsOn(cleanBundledOpenboards)
     into(generatedOpenboardsAssets.map { it.dir("bundled-openboards") })
     if (bundledOpenboardsDelivery == "base") {
         from(bundleManifestSource) {
@@ -141,8 +149,8 @@ android {
         applicationId = "org.libreaac.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.1.9"
+        versionCode = 11
+        versionName = "0.1.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

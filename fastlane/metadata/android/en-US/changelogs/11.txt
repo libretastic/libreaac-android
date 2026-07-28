@@ -1,0 +1,4 @@
+Reduces the bundled selection to nine boards for a smaller installation.
+CommuniKate 12, Quick Core 84 and 112, and Vocal Flair 84 remain available
+separately from the public openboards collection. All bundled boards are
+documented under CC BY 4.0.
