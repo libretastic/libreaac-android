@@ -1,0 +1,6 @@
+[submodule "upstream/libreaac"]
+	path = upstream/libreaac
+	url = https://github.com/libretastic/libreaac.git
+[submodule "upstream/openboards"]
+	path = upstream/openboards
+	url = https://github.com/libretastic/openboards.git

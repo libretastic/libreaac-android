@@ -23,13 +23,20 @@ All source repositories used by the Android build are public:
 | Web application | [libretastic/libreaac](https://github.com/libretastic/libreaac) |
 | Bundled boards | [libretastic/openboards](https://github.com/libretastic/openboards) |
 
-When the sibling `openboards` repository is present, builds can stage the
-reviewed selection in `openboards/bundles/libreaac.json`. Test and direct APKs
-put the archives in the base package. Google Play bundles put them in an
-install-time Play Asset Delivery pack so the base module remains below Play's
-200 MB compressed-download limit. The archives are never copied into Git.
-The public source for that collection is
-[github.com/libretastic/openboards](https://github.com/libretastic/openboards).
+The repository pins the exact web application and reviewed board collection as
+public Git submodules under `upstream/`. Initialise them after cloning:
+
+```sh
+git submodule update --init --recursive
+```
+
+Builds stage the reviewed selection in
+`upstream/openboards/bundles/libreaac.json`. Test and direct APKs put the
+archives in the base package. Google Play bundles put them in an install-time
+Play Asset Delivery pack so the base module remains below Play's 200 MB
+compressed-download limit. The archives remain in their independently
+maintained public source repository rather than being copied into this
+repository's Git history.
 
 ## Development build
 
@@ -49,8 +56,9 @@ The debug APK is automatically signed with the workstation's Android debug key.
 It is suitable for development only and cannot be upgraded in place to a
 release-signed build.
 
-If `../openboards` is absent, public and debug builds remain possible but use
-an empty bundled-board manifest. Override the source checkout with:
+If the submodule is not initialised and `../openboards` is absent, public and
+debug builds remain possible but use an empty bundled-board manifest. Override
+the source checkout with:
 
 ```sh
 ./gradlew -PlibreaacOpenboardsRepo=/absolute/path/to/openboards assembleDebug
@@ -88,27 +96,21 @@ environment variables happen to be present.
 
 ## Clean public-source build
 
-The following reproduces the complete unsigned LibreAAC 0.1.7 APK from clean
-clones of the three public GitHub repositories. Full commit IDs intentionally
-pin the web application and board collection used by that release:
+The following builds the complete unsigned LibreAAC 0.1.9 APK from a clean
+clone of the public GitHub repository. Its Git submodules pin the exact web
+application and board collection revisions used by the release:
 
 ```sh
 mkdir libreaac-public-build
 cd libreaac-public-build
 
-git clone https://github.com/libretastic/libreaac-android.git
-git clone https://github.com/libretastic/libreaac.git
-git clone https://github.com/libretastic/openboards.git
+git clone --branch v0.1.9 --recurse-submodules \
+  https://github.com/libretastic/libreaac-android.git
 
-git -C libreaac-android checkout --detach \
-  45eaab18a0fc457634821a244525634317f7fcc1
-git -C libreaac checkout --detach \
-  3df9ed90f062c6512d4af06b7eb89e3dc9910b5f
-git -C openboards checkout --detach \
-  c0fbebf62c7b7af9f93271d01737f3cae201a4f5
+test "$(git -C libreaac-android describe --tags --exact-match)" = "v0.1.9"
 
 (
-  cd libreaac
+  cd libreaac-android/upstream/libreaac
   npm ci
   npm test
   npm run typecheck
@@ -117,14 +119,13 @@ git -C openboards checkout --detach \
 )
 
 libreaac-android/scripts/sync-frontend.sh \
-  libreaac/dist \
-  3df9ed90f062c6512d4af06b7eb89e3dc9910b5f
+  libreaac-android/upstream/libreaac/dist \
+  "$(git -C libreaac-android/upstream/libreaac rev-parse HEAD)"
 
 (
   cd libreaac-android
   ./gradlew \
     -PlibreaacReleaseSigningEnabled=false \
-    -PlibreaacOpenboardsRepo=../openboards \
     -PlibreaacBundledOpenboardsRequired=true \
     -PlibreaacBundledOpenboardsDelivery=base \
     testDebugUnitTest lint assembleRelease
@@ -136,8 +137,8 @@ The resulting unsigned APK is
 This procedure has been tested from clean public clones. The rebuilt web
 assets matched the assets in the Android release commit byte for byte.
 
-For the latest development revision, omit the three `checkout --detach`
-commands. A release should always replace them with reviewed full commit IDs.
+For the latest development revision, omit `--branch v0.1.9` and the exact-tag
+check. Release tags continue to pin reviewed full submodule commit IDs.
 
 ## F-Droid packaging notes
 
@@ -147,7 +148,7 @@ rather than trust the compiled web bundle committed for ordinary Android
 builds:
 
 1. Use the Android repository as `Repo` and pin a full Android commit.
-2. Obtain the web and openboards repositories as pinned source libraries.
+2. Initialise the pinned public web and openboards Git submodules.
 3. Remove `app/src/main/assets` during source preparation.
 4. Run `npm ci`, the web verification commands, and `npm run build`, then use
    `scripts/sync-frontend.sh` to recreate the Android assets.
@@ -172,11 +173,11 @@ when preparing the `fdroiddata` submission.
 
 ## Update the embedded web release
 
-First verify and build the sibling
-[`libreaac` web repository](https://github.com/libretastic/libreaac):
+First verify and build the pinned
+[`libreaac` web submodule](https://github.com/libretastic/libreaac):
 
 ```sh
-cd ../libreaac
+cd upstream/libreaac
 npm ci
 npm test
 npm run typecheck
@@ -187,7 +188,7 @@ npm run build
 Then, from this repository, embed it using a release tag or full commit ID:
 
 ```sh
-scripts/sync-frontend.sh ../libreaac/dist WEB_RELEASE_OR_COMMIT
+scripts/sync-frontend.sh upstream/libreaac/dist WEB_RELEASE_OR_COMMIT
 ./gradlew testDebugUnitTest lint assembleDebug
 ```
 
@@ -301,7 +302,7 @@ leading `v`, verify that the APK version matches it, rebuild and verify the
 signatures, then create the release:
 
 ```sh
-release_version=0.1.8
+release_version=0.1.9
 release_tag="v${release_version}"
 release_apk="app/build/outputs/apk/release/app-release.apk"
 release_aab="app/build/outputs/bundle/release/app-release.aab"
@@ -342,9 +343,9 @@ Useful release operations are:
 ```sh
 glab release list
 glab release view
-glab release view v0.1.8
-glab release download v0.1.8 -n "libreaac-v0.1.8.*"
-glab release upload v0.1.8 ./additional-file
+glab release view v0.1.9
+glab release download v0.1.9 -n "libreaac-v0.1.9.*"
+glab release upload v0.1.9 ./additional-file
 ```
 
 On `release download`, `-n` means an asset-name glob. On `release create`, `-n`
@@ -353,7 +354,7 @@ automatically generated source archives. Deleting a release is destructive and
 must be explicit:
 
 ```sh
-glab release delete v0.1.8 -y
+glab release delete v0.1.9 -y
 ```
 
 Add `--with-tag` only when the Git tag must also be deleted.

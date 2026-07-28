@@ -22,6 +22,9 @@ val openboardsRepository = providers
     .orElse(providers.environmentVariable("LIBREAAC_OPENBOARDS_REPO"))
     .orNull
     ?.let(::file)
+    ?: rootProject.file("upstream/openboards").takeIf {
+        it.resolve("bundles/libreaac.json").isFile
+    }
     ?: rootProject.file("../openboards")
 val openboardsManifest = openboardsRepository.resolve("bundles/libreaac.json")
 val generatedOpenboardsAssets = layout.buildDirectory.dir(
@@ -138,8 +141,8 @@ android {
         applicationId = "org.libreaac.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.1.8"
+        versionCode = 10
+        versionName = "0.1.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -157,6 +160,9 @@ android {
 
     buildTypes {
         release {
+            // Absolute checkout paths make otherwise identical APKs differ.
+            // Release tags and FRONTEND-RELEASE retain the source revisions.
+            vcsInfo.include = false
             if (releaseSigningEnabled) {
                 signingConfig = signingConfigs.getByName("release")
             }
