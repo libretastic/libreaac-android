@@ -19,6 +19,9 @@ val openboardsRepository = providers
     .orElse(providers.environmentVariable("LIBREAAC_OPENBOARDS_REPO"))
     .orNull
     ?.let(::file)
+    ?: rootProject.file("upstream/openboards").takeIf {
+        it.resolve("bundles/libreaac.json").isFile
+    }
     ?: rootProject.file("../openboards")
 val manifestFile = openboardsRepository.resolve("bundles/libreaac.json")
 

@@ -1,0 +1,3 @@
+Makes public-source and F-Droid builds easier to reproduce. The exact web
+application and bundled-board sources are now pinned as public Git submodules.
+Application behaviour and bundled communication boards are unchanged.

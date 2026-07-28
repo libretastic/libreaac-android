@@ -1,8 +1,8 @@
 # LibreAAC for Android
 
 This repository packages LibreAAC as an offline Android application. It is a
-small Kotlin WebView shell around a pinned production build from the sibling
-[`libreaac` web repository](https://github.com/libretastic/libreaac).
+small Kotlin WebView shell around a pinned production build from the
+[`libreaac` web submodule](https://github.com/libretastic/libreaac).
 
 The shell:
 
@@ -19,12 +19,13 @@ release builds work independently; trusted private automation supplies signing
 material only when producing distributable APKs or Google Play bundles.
 
 Official builds stage the public communication-board selection declared by
-the sibling
-[`openboards` repository](https://github.com/libretastic/openboards). These
-large generated assets are omitted from Git history and are loaded into
-LibreAAC's local library only when the user first opens a bundled board.
-Self-contained APKs carry them in the base package; Google Play AABs use an
-install-time Play Asset Delivery pack.
+the pinned
+[`openboards` submodule](https://github.com/libretastic/openboards). The exact
+web application source is pinned in the same way. These large generated assets
+are omitted from this repository's Git history and are loaded into LibreAAC's
+local library only when the user first opens a bundled board. Self-contained
+APKs carry them in the base package; Google Play AABs use an install-time Play
+Asset Delivery pack.
 
 It never fetches a moving web deployment. `app/src/main/assets/FRONTEND-RELEASE`
 identifies the embedded web release and records a SHA-256 digest for every
@@ -39,6 +40,7 @@ testing details are published at
 Requires JDK 17 or later and Android SDK platform 36.
 
 ```sh
+git submodule update --init --recursive
 ./gradlew testDebugUnitTest lint assembleDebug
 ```
 

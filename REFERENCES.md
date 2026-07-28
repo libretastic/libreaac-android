@@ -1,8 +1,8 @@
 # References
 
 Open Board Format material and the reviewed Android bundle selection are
-maintained in the sibling
-[`openboards` repository](https://github.com/libretastic/openboards):
+maintained in the pinned
+[`openboards` submodule](https://github.com/libretastic/openboards):
 
 - `bundles/libreaac.json` — files staged in official LibreAAC builds
 - `boards/` — communication boards and adjacent licence sidecars
@@ -18,6 +18,6 @@ Platform sources:
 - [Android Gradle Plugin release notes](https://developer.android.com/build/releases/gradle-plugin)
 - [Play Asset Delivery](https://developer.android.com/guide/playcore/asset-delivery)
 
-The web application is sourced from the sibling
-[`libreaac` repository](https://github.com/libretastic/libreaac) and is embedded
-as a pinned, checksummed release—not loaded from a live site.
+The web application is sourced from the pinned
+[`libreaac` submodule](https://github.com/libretastic/libreaac) and is embedded
+as a checksummed release—not loaded from a live site.
