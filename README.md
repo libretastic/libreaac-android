@@ -18,6 +18,12 @@ The repository contains no release-signing credentials. Debug and unsigned
 release builds work independently; trusted private automation supplies signing
 material only when producing distributable APKs or Google Play bundles.
 
+Official builds stage the public communication-board selection declared by
+the sibling `openboards` repository. These large generated assets are omitted
+from Git history and are loaded into LibreAAC's local library only when the
+user first opens a bundled board. Self-contained APKs carry them in the base
+package; Google Play AABs use an install-time Play Asset Delivery pack.
+
 It never fetches a moving web deployment. `app/src/main/assets/FRONTEND-RELEASE`
 identifies the embedded web release and records a SHA-256 digest for every
 asset.

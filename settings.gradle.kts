@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "LibreAAC Android"
 include(":app")
-
+include(":bundled_openboards")

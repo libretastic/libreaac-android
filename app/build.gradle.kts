@@ -1,5 +1,93 @@
+import groovy.json.JsonSlurper
+import org.gradle.api.tasks.Sync
+
 plugins {
     id("com.android.application")
+}
+
+val bundledOpenboardsRequired = providers
+    .gradleProperty("libreaacBundledOpenboardsRequired")
+    .orNull
+    ?.toBooleanStrictOrNull()
+    ?: false
+val bundledOpenboardsDelivery = providers
+    .gradleProperty("libreaacBundledOpenboardsDelivery")
+    .orElse("base")
+    .get()
+require(bundledOpenboardsDelivery in setOf("base", "asset-pack", "none")) {
+    "libreaacBundledOpenboardsDelivery must be base, asset-pack, or none"
+}
+val openboardsRepository = providers
+    .gradleProperty("libreaacOpenboardsRepo")
+    .orElse(providers.environmentVariable("LIBREAAC_OPENBOARDS_REPO"))
+    .orNull
+    ?.let(::file)
+    ?: rootProject.file("../openboards")
+val openboardsManifest = openboardsRepository.resolve("bundles/libreaac.json")
+val generatedOpenboardsAssets = layout.buildDirectory.dir(
+    "generated/bundledOpenboardsAssets"
+)
+
+@Suppress("UNCHECKED_CAST")
+val bundledBoardEntries: List<Map<String, Any?>> =
+    if (openboardsManifest.isFile) {
+        val manifest = JsonSlurper().parse(openboardsManifest) as Map<String, Any?>
+        require(manifest["schemaVersion"] == 1) {
+            "Unsupported LibreAAC openboards bundle manifest"
+        }
+        require(manifest["bundle"] == "libreaac") {
+            "Unexpected openboards bundle: ${manifest["bundle"]}"
+        }
+        manifest["boards"] as? List<Map<String, Any?>>
+            ?: error("The LibreAAC openboards bundle has no boards array")
+    } else {
+        emptyList()
+    }
+
+if (!openboardsManifest.isFile && bundledOpenboardsRequired) {
+    error(
+        "Required openboards bundle manifest not found: " +
+            openboardsManifest.absolutePath
+    )
+}
+if (!openboardsManifest.isFile) {
+    logger.warn(
+        "Building without bundled openboards; no manifest found at {}",
+        openboardsManifest.absolutePath
+    )
+}
+
+val bundledBoardSources = bundledBoardEntries.map { entry ->
+    val filename = entry["filename"] as? String
+        ?: error("A bundled openboard has no filename")
+    val sourcePath = entry["path"] as? String
+        ?: error("A bundled openboard has no path")
+    val source = openboardsRepository.resolve(sourcePath)
+    require(source.isFile) {
+        "Bundled openboard is missing: ${source.absolutePath}"
+    }
+    require(source.name == filename) {
+        "Bundled openboard filename does not match its path: $filename"
+    }
+    source
+}
+val bundleManifestSource =
+    if (openboardsManifest.isFile) {
+        openboardsManifest
+    } else {
+        file("src/main/bundled-openboards-empty.json")
+    }
+
+val prepareBundledOpenboards = tasks.register<Sync>(
+    "prepareBundledOpenboards"
+) {
+    into(generatedOpenboardsAssets.map { it.dir("bundled-openboards") })
+    if (bundledOpenboardsDelivery == "base") {
+        from(bundleManifestSource) {
+            rename { "manifest.json" }
+        }
+        from(bundledBoardSources)
+    }
 }
 
 fun releaseSigningValue(propertyName: String, environmentName: String): String? =
@@ -44,13 +132,14 @@ if (releaseSigningEnabled && !releaseSigningConfigured) {
 android {
     namespace = "org.libreaac.app"
     compileSdk = 36
+    assetPacks += listOf(":bundled_openboards")
 
     defaultConfig {
         applicationId = "org.libreaac.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.1.5"
+        versionCode = 7
+        versionName = "0.1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -90,6 +179,20 @@ android {
             it.useJUnit()
         }
     }
+
+    sourceSets {
+        getByName("main").assets.directories.add(
+            generatedOpenboardsAssets.get().asFile.absolutePath
+        )
+    }
+
+    androidResources {
+        noCompress += "obz"
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(prepareBundledOpenboards)
 }
 
 dependencies {
