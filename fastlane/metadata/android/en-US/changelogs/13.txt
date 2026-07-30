@@ -1,0 +1,1 @@
+Clearing the phrase now immediately stops text-to-speech and recorded board audio.
