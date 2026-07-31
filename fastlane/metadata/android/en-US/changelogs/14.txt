@@ -1,0 +1,1 @@
+Long-pressing app controls no longer opens Android's text-selection menu.
