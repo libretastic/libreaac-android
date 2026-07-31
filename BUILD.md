@@ -96,7 +96,7 @@ environment variables happen to be present.
 
 ## Clean public-source build
 
-The following builds the complete unsigned LibreAAC 0.1.14 APK from a clean
+The following builds the complete unsigned LibreAAC 0.1.15 APK from a clean
 clone of the public GitHub repository. Its Git submodules pin the exact web
 application and board collection revisions used by the release:
 
@@ -104,10 +104,10 @@ application and board collection revisions used by the release:
 mkdir libreaac-public-build
 cd libreaac-public-build
 
-git clone --branch v0.1.14 --recurse-submodules \
+git clone --branch v0.1.15 --recurse-submodules \
   https://github.com/libretastic/libreaac-android.git
 
-test "$(git -C libreaac-android describe --tags --exact-match)" = "v0.1.14"
+test "$(git -C libreaac-android describe --tags --exact-match)" = "v0.1.15"
 
 (
   cd libreaac-android/upstream/libreaac
@@ -137,7 +137,7 @@ The resulting unsigned APK is
 This procedure has been tested from clean public clones. The rebuilt web
 assets matched the assets in the Android release commit byte for byte.
 
-For the latest development revision, omit `--branch v0.1.14` and the exact-tag
+For the latest development revision, omit `--branch v0.1.15` and the exact-tag
 check. Release tags continue to pin reviewed full submodule commit IDs.
 
 ## F-Droid packaging notes
@@ -300,7 +300,7 @@ leading `v`, verify that the APK version matches it, rebuild and verify the
 signatures, then create the release:
 
 ```sh
-release_version=0.1.14
+release_version=0.1.15
 release_tag="v${release_version}"
 release_apk="app/build/outputs/apk/release/app-release.apk"
 release_aab="app/build/outputs/bundle/release/app-release.aab"
@@ -341,9 +341,9 @@ Useful release operations are:
 ```sh
 glab release list
 glab release view
-glab release view v0.1.14
-glab release download v0.1.14 -n "libreaac-v0.1.14.*"
-glab release upload v0.1.14 ./additional-file
+glab release view v0.1.15
+glab release download v0.1.15 -n "libreaac-v0.1.15.*"
+glab release upload v0.1.15 ./additional-file
 ```
 
 On `release download`, `-n` means an asset-name glob. On `release create`, `-n`
@@ -352,7 +352,7 @@ automatically generated source archives. Deleting a release is destructive and
 must be explicit:
 
 ```sh
-glab release delete v0.1.14 -y
+glab release delete v0.1.15 -y
 ```
 
 Add `--with-tag` only when the Git tag must also be deleted.
